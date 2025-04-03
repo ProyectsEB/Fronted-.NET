@@ -1,142 +1,160 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Form, Input, Button, DatePicker, InputNumber, Select, Row, Col, Card, message } from 'antd';
 import axios from '../api/axiosInstance';
-import { ChevronDownIcon } from '@heroicons/react/16/solid';
+import { useNavigate } from 'react-router-dom';
+
+const { Option } = Select;
 
 const CrearEmpleadoForm = () => {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    nombre: '',
-    fechaNacimiento: '',
-    direccion: '',
-    telefono: '',
-    correoElectronico: '',
-    puesto: '',
-    departamento: '',
-    fechaContratacion: '',
-    salario: '',
-    estadoLaboral: 'Activo',
-    usuario: {
-      nombreUsuario: '',
-      contraseñaHash: '',
-      rol: 'Empleado',
-    },
-  });
+  const [form] = Form.useForm();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name.startsWith('usuario.')) {
-      const key = name.split('.')[1];
-      setForm({ ...form, usuario: { ...form.usuario, [key]: value } });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onFinish = async (values) => {
     try {
-      await axios.post('/Empleados', form);
-      alert('Empleado creado exitosamente');
+      await axios.post('/Empleados', values);
+      message.success('Empleado creado exitosamente');
       navigate('/empleados');
     } catch (err) {
       console.error('Error al crear empleado:', err);
-      alert('Error al crear empleado');
+      message.error('Error al crear empleado');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-10 max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
-      <div className="space-y-8">
-        <div className="border-b border-gray-300 pb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Información del Empleado</h2>
+    <Card title="Crear Nuevo Empleado" bordered={false} style={{ maxWidth: 800, margin: 'auto' }}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onFinish}
+        initialValues={{
+          estadoLaboral: 'Activo',
+          usuario: { rol: 'Empleado' },
+        }}
+      >
+        <Row gutter={16}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="nombre"
+              label="Nombre"
+              rules={[{ required: true, message: 'Por favor ingrese el nombre' }]}
+            >
+              <Input placeholder="Nombre completo" />
+            </Form.Item>
+            <Form.Item
+              name="fechaNacimiento"
+              label="Fecha de Nacimiento"
+              rules={[{ required: true, message: 'Por favor seleccione la fecha de nacimiento' }]}
+            >
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="direccion"
+              label="Dirección"
+              rules={[{ required: true, message: 'Por favor ingrese la dirección' }]}
+            >
+              <Input placeholder="Dirección completa" />
+            </Form.Item>
+            <Form.Item
+              name="telefono"
+              label="Teléfono"
+              rules={[{ required: true, message: 'Por favor ingrese el teléfono' }]}
+            >
+              <Input placeholder="Número de teléfono" />
+            </Form.Item>
+            <Form.Item
+              name="correoElectronico"
+              label="Correo Electrónico"
+              rules={[
+                { required: true, message: 'Por favor ingrese el correo electrónico' },
+                { type: 'email', message: 'Ingrese un correo electrónico válido' },
+              ]}
+            >
+              <Input placeholder="Correo electrónico" />
+            </Form.Item>
+            <Form.Item
+              name="puesto"
+              label="Puesto"
+              rules={[{ required: true, message: 'Por favor ingrese el puesto' }]}
+            >
+              <Input placeholder="Puesto de trabajo" />
+            </Form.Item>
+          </Col>
 
-          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Nombre</label>
-              <input name="nombre" required onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-              <input type="date" name="fechaNacimiento" required onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-6">
-              <label className="block text-sm font-medium text-gray-700">Dirección</label>
-              <input name="direccion" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-              <input name="telefono" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-              <input name="correoElectronico" onChange={handleChange}
-                type="email"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Puesto</label>
-              <input name="puesto" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Departamento</label>
-              <input name="departamento" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Contratación</label>
-              <input type="date" name="fechaContratacion" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Salario</label>
-              <input type="number" name="salario" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-          </div>
-        </div>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="departamento"
+              label="Departamento"
+              rules={[{ required: true, message: 'Por favor ingrese el departamento' }]}
+            >
+              <Input placeholder="Departamento" />
+            </Form.Item>
+            <Form.Item
+              name="fechaContratacion"
+              label="Fecha de Contratación"
+              rules={[{ required: true, message: 'Por favor seleccione la fecha de contratación' }]}
+            >
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item
+              name="salario"
+              label="Salario"
+              rules={[{ required: true, message: 'Por favor ingrese el salario' }]}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                min={0}
+                formatter={(value) =>
+                  `Q ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                }
+                parser={(value) => value.replace(/Q\s?|,/g, '')}
+              />
+            </Form.Item>
+            <Form.Item
+              name="estadoLaboral"
+              label="Estado Laboral"
+              rules={[{ required: true, message: 'Por favor seleccione el estado laboral' }]}
+            >
+              <Select>
+                <Option value="Activo">Activo</Option>
+                <Option value="Inactivo">Inactivo</Option>
+              </Select>
+            </Form.Item>
+            <Form.Item
+              name={['usuario', 'nombreUsuario']}
+              label="Nombre de Usuario"
+              rules={[{ required: true, message: 'Por favor ingrese el nombre de usuario' }]}
+            >
+              <Input placeholder="Nombre de usuario" />
+            </Form.Item>
+            <Form.Item
+              name={['usuario', 'contraseñaHash']}
+              label="Contraseña"
+              rules={[{ required: true, message: 'Por favor ingrese la contraseña' }]}
+            >
+              <Input.Password placeholder="Contraseña" />
+            </Form.Item>
+            <Form.Item
+              name={['usuario', 'rol']}
+              label="Rol"
+              rules={[{ required: true, message: 'Por favor seleccione el rol' }]}
+            >
+              <Select>
+                <Option value="Administrador">Administrador</Option>
+                <Option value="Editor">Editor</Option>
+                <Option value="Empleado">Empleado</Option>
+                <Option value="Auditor">Auditor</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <div className="border-b border-gray-300 pb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Datos de Usuario</h2>
-          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
-              <input name="usuario.nombreUsuario" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-              <input name="usuario.contraseñaHash" type="password" onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3 relative">
-              <label className="block text-sm font-medium text-gray-700">Rol</label>
-              <select name="usuario.rol" onChange={handleChange}
-                value={form.usuario.rol}
-                className="mt-1 appearance-none block w-full rounded-md border-gray-300 bg-white py-2 pl-3 pr-10 text-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                <option value="Administrador">Administrador</option>
-                <option value="Editor">Editor</option>
-                <option value="Empleado">Empleado</option>
-                <option value="Auditor">Auditor</option>
-              </select>
-              <ChevronDownIcon className="absolute right-2 top-9 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-4">
-          <button type="button" className="text-sm font-semibold text-gray-900">Cancelar</button>
-          <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-            Crear
-          </button>
-        </div>
-      </div>
-    </form>
+        <Form.Item style={{ textAlign: 'right' }}>
+          <Button type="primary" htmlType="submit">
+            Crear Empleado
+          </Button>
+        </Form.Item>
+      </Form>
+    </Card>
   );
 };
 

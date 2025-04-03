@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Form, Input, Button, DatePicker, InputNumber, Select, Row, Col, Card, message, Spin } from 'antd';
 import axios from '../api/axiosInstance';
-import { ChevronDownIcon } from '@heroicons/react/16/solid';
+import dayjs from 'dayjs';
+
+const { Option } = Select;
 
 const EditarEmpleadoForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState(null);
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios.get(`/Empleados/${id}`)
@@ -19,128 +23,113 @@ const EditarEmpleadoForm = () => {
             rol: 'Empleado',
           };
         }
-        setForm(empleado);
+
+        form.setFieldsValue({
+          ...empleado,
+          fechaNacimiento: dayjs(empleado.fechaNacimiento),
+          fechaContratacion: dayjs(empleado.fechaContratacion),
+        });
+
+        setLoading(false);
       })
       .catch((err) => {
-        console.error('Error al cargar empleado:', err);
-        alert('Error al obtener el empleado');
+        console.error('Error al obtener empleado:', err);
+        message.error('Error al obtener el empleado');
+        setLoading(false);
       });
-  }, [id]);
+  }, [id, form]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (name.startsWith('usuario.')) {
-      const key = name.split('.')[1];
-      setForm({ ...form, usuario: { ...form.usuario, [key]: value } });
-    } else {
-      setForm({ ...form, [name]: value });
-    }
-  };
+  const onFinish = async (values) => {
+    const formatted = {
+      ...values,
+      fechaNacimiento: values.fechaNacimiento?.format('YYYY-MM-DD'),
+      fechaContratacion: values.fechaContratacion?.format('YYYY-MM-DD'),
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
     try {
-      await axios.put(`/Empleados/${id}`, form);
-      alert('Empleado actualizado');
+      await axios.put(`/Empleados/${id}`, formatted);
+      message.success('Empleado actualizado');
       navigate('/empleados');
     } catch (error) {
-      console.error('Error al actualizar:', error);
-      alert('No se pudo actualizar el empleado');
+      console.error('Error al actualizar empleado:', error);
+      message.error('No se pudo actualizar el empleado');
     }
   };
 
-  if (!form) return <p className="text-center mt-10 text-gray-600">Cargando datos...</p>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Spin size="large" /></div>;
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="p-10 max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
-      <div className="space-y-8">
-        <div className="border-b border-gray-300 pb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Editar Empleado</h2>
+    <Card title="Editar Empleado" bordered={false} style={{ maxWidth: 800, margin: 'auto' }}>
+      <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Row gutter={16}>
+          <Col xs={24} sm={12}>
+            <Form.Item name="nombre" label="Nombre" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="fechaNacimiento" label="Fecha de Nacimiento" rules={[{ required: true }]}>
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="direccion" label="Dirección" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="telefono" label="Teléfono" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="correoElectronico" label="Correo Electrónico" rules={[{ type: 'email' }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item name="puesto" label="Puesto">
+              <Input />
+            </Form.Item>
+          </Col>
 
-          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Nombre</label>
-              <input name="nombre" value={form.nombre || ''} onChange={handleChange} required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-              <input type="date" name="fechaNacimiento" value={form.fechaNacimiento || ''} onChange={handleChange} required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-6">
-              <label className="block text-sm font-medium text-gray-700">Dirección</label>
-              <input name="direccion" value={form.direccion || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Teléfono</label>
-              <input name="telefono" value={form.telefono || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-              <input name="correoElectronico" value={form.correoElectronico || ''} onChange={handleChange} type="email"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Puesto</label>
-              <input name="puesto" value={form.puesto || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Departamento</label>
-              <input name="departamento" value={form.departamento || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Fecha de Contratación</label>
-              <input type="date" name="fechaContratacion" value={form.fechaContratacion || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Salario</label>
-              <input type="number" name="salario" value={form.salario || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-          </div>
-        </div>
+          <Col xs={24} sm={12}>
+            <Form.Item name="departamento" label="Departamento">
+              <Input />
+            </Form.Item>
+            <Form.Item name="fechaContratacion" label="Fecha de Contratación">
+              <DatePicker style={{ width: '100%' }} />
+            </Form.Item>
+            <Form.Item name="salario" label="Salario">
+              <InputNumber
+                style={{ width: '100%' }}
+                min={0}
+                formatter={(value) => `Q ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => value.replace(/Q\s?|,/g, '')}
+              />
+            </Form.Item>
+            <Form.Item name="estadoLaboral" label="Estado Laboral">
+              <Select>
+                <Option value="Activo">Activo</Option>
+                <Option value="Inactivo">Inactivo</Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name={['usuario', 'nombreUsuario']} label="Nombre de Usuario">
+              <Input />
+            </Form.Item>
+            <Form.Item name={['usuario', 'contraseñaHash']} label="Contraseña">
+              <Input.Password />
+            </Form.Item>
+            <Form.Item name={['usuario', 'rol']} label="Rol">
+              <Select>
+                <Option value="Administrador">Administrador</Option>
+                <Option value="Editor">Editor</Option>
+                <Option value="Empleado">Empleado</Option>
+                <Option value="Auditor">Auditor</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
-        <div className="border-b border-gray-300 pb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Datos de Usuario</h2>
-          <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
-              <input name="usuario.nombreUsuario" value={form.usuario?.nombreUsuario || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3">
-              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-              <input name="usuario.contraseñaHash" type="password" value={form.usuario?.contraseñaHash || ''} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" />
-            </div>
-            <div className="sm:col-span-3 relative">
-              <label className="block text-sm font-medium text-gray-700">Rol</label>
-              <select name="usuario.rol" value={form.usuario?.rol || 'Empleado'} onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 bg-white py-2 pl-3 pr-10 text-sm">
-                <option value="Administrador">Administrador</option>
-                <option value="Editor">Editor</option>
-                <option value="Empleado">Empleado</option>
-                <option value="Auditor">Auditor</option>
-              </select>
-              <ChevronDownIcon className="absolute right-2 top-9 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-4">
-          <button type="button" className="text-sm font-semibold text-gray-900">Cancelar</button>
-          <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-            Actualizar
-          </button>
-        </div>
-      </div>
-    </form>
+        <Form.Item style={{ textAlign: 'right' }}>
+          <Button type="primary" htmlType="submit">
+            Actualizar Empleado
+          </Button>
+        </Form.Item>
+      </Form>
+    </Card>
   );
 };
 
