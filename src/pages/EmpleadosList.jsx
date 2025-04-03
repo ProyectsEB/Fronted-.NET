@@ -3,32 +3,37 @@ import axios from '../api/axiosInstance';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ROLES } from '../utils/roles';
-import { Table, Space, Tag, Button, Popconfirm } from 'antd';
+import { Table, Space, Tag, Button, Popconfirm, Skeleton } from 'antd';
 import toast from 'react-hot-toast';
 
 const EmpleadosList = () => {
   const [empleados, setEmpleados] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(false);
   const { user } = useAuth();
 
   const fetchEmpleados = async () => {
     try {
       setLoading(true);
+      setVisible(false);
       const res = await axios.get('/Empleados');
-
       const empleadosParseados = res.data.map((e) => ({
         key: e.empleadoID,
         nombre: e.nombre || '—',
         puesto: e.puesto || '—',
-        rol: e.rol || 'Sin rol',
+        rol: e.rol || 'Sin rol', // ← Tu lógica original
         estado: e.estadoLaboral || 'Sin estado',
       }));
 
-      setEmpleados(empleadosParseados);
+      // Simula duración mínima del skeleton
+      setTimeout(() => {
+        setEmpleados(empleadosParseados);
+        setLoading(false);
+        setTimeout(() => setVisible(true), 100);
+      }, 1500);
     } catch (error) {
       console.error('Error al cargar empleados:', error);
       toast.error('Error al cargar empleados');
-    } finally {
       setLoading(false);
     }
   };
@@ -41,7 +46,7 @@ const EmpleadosList = () => {
     try {
       await axios.delete(`/Empleados/${id}`);
       toast.success('Empleado inactivado');
-      fetchEmpleados();
+      fetchEmpleados(); // recarga la tabla y el empleado aparecerá con estado Inactivo
     } catch (err) {
       console.error('Error al inactivar:', err);
       toast.error('No se pudo inactivar');
@@ -87,7 +92,7 @@ const EmpleadosList = () => {
           )}
           {user.role === ROLES.ADMIN && (
             <Popconfirm
-              title="¿Inactivar empleado?"
+              title="¿Está seguro de inactivar este empleado?"
               onConfirm={() => handleInactivar(record.key)}
               okText="Sí"
               cancelText="No"
@@ -115,13 +120,18 @@ const EmpleadosList = () => {
         </Link>
       )}
 
-      <Table
-        columns={columns}
-        dataSource={empleados}
-        loading={loading}
-        pagination={{ pageSize: 6 }}
-        bordered
-      />
+      {loading ? (
+        <Skeleton active paragraph={{ rows: 8 }} />
+      ) : (
+        <div className={`transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+          <Table
+            columns={columns}
+            dataSource={empleados}
+            pagination={{ pageSize: 6 }}
+            bordered
+          />
+        </div>
+      )}
     </div>
   );
 };
